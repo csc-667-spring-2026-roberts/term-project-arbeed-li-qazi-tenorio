@@ -7,7 +7,7 @@ CSC 667 Term Project — Spring 2026
 | Name | GitHub | Email |
 |------|--------|-------|
 |Saeed Qazi | @kameqazi1 | sqazi@sfsu.edu |
-| Member 2 | @username | email@sfsu.edu |
+| Jack Li | @Nakapq | jli105@sfsu.edu |
 | Member 3 | @username | email@sfsu.edu |
 | Member 4 | @username | email@sfsu.edu |
 
