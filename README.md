@@ -9,7 +9,7 @@ CSC 667 Term Project — Spring 2026
 |Saeed Qazi | @kameqazi1 | sqazi@sfsu.edu |
 | Jack Li | @Nakapq | jli105@sfsu.edu |
 | Jason Arbeed | @Arbeedjason | jarbeed@sfsu.edu |
-| Member 4 | @username | email@sfsu.edu |
+| Justine Tenorio | @tatinCode | jtenorio@sfsu.edu |
 
 ## Setup
 
