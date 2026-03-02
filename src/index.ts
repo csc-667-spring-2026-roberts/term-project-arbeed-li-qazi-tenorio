@@ -14,5 +14,5 @@ app.set("views", "views");
 app.use("/", indexRouter);
 
 app.listen(port, () => {
-    console.log(`Server is on  http://localhost:${port}`);
+    console.log(`Server is on  http://localhost:${String(port)}`);
 });
