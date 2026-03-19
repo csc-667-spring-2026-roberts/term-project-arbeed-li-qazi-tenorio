@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/test.css" />
+        <title>Log In</title>
+    </head>
+    <body>
+        <h1>Log In</h1>
+
+        <% if (error) { %>
+        <p><%= error %></p>
+        <% } %>
+
+        <form action="/login" method="POST">
+            <label>
+                Username or Email
+                <input type="text" name="identifier" value="<%= form.identifier %>" required />
+            </label>
+            <br />
+
+            <label>
+                Password
+                <input type="password" name="password" required />
+            </label>
+            <br />
+
+            <button type="submit">Log In</button>
+        </form>
+
+        <p><a href="/signup">Need an account? Sign up</a></p>
+        <p><a href="/">Home</a></p>
+        <% if (process.env.NODE_ENV !== "production") { %>
+        <form method="POST" action="/dev/login">
+            <button type="submit">Dev Login (Local Only)</button>
+        </form>
+        <% } %>
+    </body>
+</html>
+

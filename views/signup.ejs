@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/test.css" />
+        <title>Sign Up</title>
+    </head>
+    <body>
+        <h1>Create an Account</h1>
+        <% if (error) { %>
+        <p><%= error %></p>
+        <% } %>
+
+        <form action="/signup" method="POST">
+            <label>
+                Username:
+                <input type="text" name="username" value="<%= form.username %>" required />
+            </label>
+            <br />
+
+            <label>
+                Email:
+                <input type="email" name="email" value="<%= form.email %>" required />
+            </label>
+            <br />
+
+            <label>
+                Password:
+                <input type="password" name="password" minlength="8" required />
+            </label>
+            <br />
+
+            <button type="submit">Sign Up</button>
+        </form>
+        <p><a href="/login">Already have an account? Log in</a></p>
+        <p><a href="/">Home</a></p>
+    </body>
+</html>

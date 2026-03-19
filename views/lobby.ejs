@@ -4,21 +4,18 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="stylesheet" href="/test.css" />
-        <title>Texas Hold'em Poker</title>
+        <title>Lobby</title>
     </head>
     <body>
-        <h1>Texas Hold'em Poker</h1>
-        <p>Welcome to Texas Hold'em Poker!</p>
+        <h1>Lobby</h1>
+        <p>You are logged in!</p>
+        <p>User ID: <%= currentUserId %></p>
 
-        <% if (currentUserId) { %>
-        <p><a href="/lobby">Go to lobby</a></p>
         <form action="/logout" method="POST">
             <button type="submit">Log Out</button>
         </form>
-        <% } else { %>
-        <p><a href="/login">Log in</a></p>
-        <p><a href="/signup">Sign up</a></p>
-        <% } %>
+
+        <p><a href="/">Home</a></p>
     </body>
 </html>
 

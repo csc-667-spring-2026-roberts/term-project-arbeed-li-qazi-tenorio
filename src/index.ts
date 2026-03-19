@@ -1,10 +1,17 @@
 import "dotenv/config";
 import express from "express";
 import indexRouter from "./routes/router.js";
-import db from "./db/connection.js";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { errorHandler, notFoundHandler } from "./middleware/error_handler.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
+const PgSession = connectPgSimple(session);
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  throw new Error("SESSION_SECRET is not set");
+}
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -13,57 +20,30 @@ app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.set("views", "views");
 
+//session
+app.use(
+  session({
+    store: new PgSession({
+      conString: process.env.DATABASE_URL,
+      tableName: "user_sessions",
+      createTableIfMissing: true,
+    }),
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
+  }),
+);
+
 app.use("/", indexRouter);
 
-/*
---------------------------------------------------
-Database Test Route (checks DB connection)
---------------------------------------------------
-*/
-app.get("/api/db-test", async (_req, res) => {
-  try {
-    const result = await db.one("SELECT NOW()");
-    res.json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Database connection failed" });
-  }
-});
-
-/*
---------------------------------------------------
-POST route (write to database)
---------------------------------------------------
-*/
-app.post("/api/message", async (req, res) => {
-  const { message } = req.body;
-
-  try {
-    const result = await db.one("INSERT INTO test_messages(message) VALUES($1) RETURNING *", [
-      message,
-    ]);
-
-    res.json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Insert failed" });
-  }
-});
-
-/*
---------------------------------------------------
-GET route (read from database)
---------------------------------------------------
-*/
-app.get("/api/messages", async (_req, res) => {
-  try {
-    const messages = await db.any("SELECT * FROM test_messages ORDER BY id DESC");
-    res.json(messages);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Query failed" });
-  }
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Server is on http://localhost:${String(port)}`);
