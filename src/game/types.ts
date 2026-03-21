@@ -52,3 +52,45 @@ export interface GameConfig {
   maxPlayers: number;
   startingChips: number;
 }
+
+export type HandRankCategory =
+  | "HIGH_CARD"
+  | "ONE_PAIR"
+  | "TWO_PAIR"
+  | "THREE_OF_A_KIND"
+  | "STRAIGHT"
+  | "FLUSH"
+  | "FULL_HOUSE"
+  | "FOUR_OF_A_KIND"
+  | "STRAIGHT_FLUSH"
+  | "ROYAL_FLUSH";
+
+export const HAND_RANK_ORDER: HandRankCategory[] = [
+  "HIGH_CARD",
+  "ONE_PAIR",
+  "TWO_PAIR",
+  "THREE_OF_A_KIND",
+  "STRAIGHT",
+  "FLUSH",
+  "FULL_HOUSE",
+  "FOUR_OF_A_KIND",
+  "STRAIGHT_FLUSH",
+  "ROYAL_FLUSH",
+];
+
+export interface EvaluatedHand {
+  category: HandRankCategory;
+  rankValue: number;
+  kickers: number[];
+  cards: Card[];
+}
+
+export interface PotWinner {
+  userId: string;
+  amount: number;
+}
+
+export interface ShowdownResult {
+  winners: PotWinner[];
+  handsByPlayer: Map<string, EvaluatedHand>;
+}
