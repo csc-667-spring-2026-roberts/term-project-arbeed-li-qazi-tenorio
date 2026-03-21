@@ -1,69 +1,46 @@
 import "dotenv/config";
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import indexRouter from "./routes/router.js";
 import db from "./db/connection.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "../../public")));
 
+// View engine
 app.set("view engine", "ejs");
-app.set("views", "views");
+app.set("views", path.join(__dirname, "../../views"));
 
+// Routes
 app.use("/", indexRouter);
 
-/*
---------------------------------------------------
-Database Test Route (checks DB connection)
---------------------------------------------------
-*/
-app.get("/api/db-test", async (_req, res) => {
+// Centralized error handler (must be last)
+app.use(
+  (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction): void => {
+    console.error(err.stack);
+    res.status(500).json({ error: err.message });
+  },
+);
+
+// Verify DB connection at startup
+void (async (): Promise<void> => {
   try {
-    const result = await db.one("SELECT NOW()");
-    res.json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Database connection failed" });
+    const obj = await db.connect();
+    void obj.done();
+    console.log("Database connected successfully");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Database connection failed:", message);
+    process.exit(1);
   }
-});
-
-/*
---------------------------------------------------
-POST route (write to database)
---------------------------------------------------
-*/
-app.post("/api/message", async (req, res) => {
-  const { message } = req.body;
-
-  try {
-    const result = await db.one("INSERT INTO test_messages(message) VALUES($1) RETURNING *", [
-      message,
-    ]);
-
-    res.json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Insert failed" });
-  }
-});
-
-/*
---------------------------------------------------
-GET route (read from database)
---------------------------------------------------
-*/
-app.get("/api/messages", async (_req, res) => {
-  try {
-    const messages = await db.any("SELECT * FROM test_messages ORDER BY id DESC");
-    res.json(messages);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Query failed" });
-  }
-});
+})();
 
 app.listen(port, () => {
   console.log(`Server is on http://localhost:${String(port)}`);
