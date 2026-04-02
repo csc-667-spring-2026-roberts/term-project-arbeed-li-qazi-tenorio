@@ -1,5 +1,11 @@
 import bcrypt from "bcrypt";
-import { createUser, findUserByIdentifier, type UserRow, UserConflictError } from "../db/users.js";
+import {
+  createUser,
+  findUserByAge,
+  findUserByIdentifier,
+  type UserRow,
+  UserConflictError,
+} from "../db/users.js";
 
 const MIN_PASSWORD_LENGTH = 8;
 const SALT_ROUNDS = 12;
@@ -23,6 +29,10 @@ function normalizeIdentifier(identifier: string): string {
   return identifier.trim();
 }
 
+function normalizeAge(age: string): string {
+  return age.trim();
+}
+
 function isValidPassword(password: string): boolean {
   return password.length >= MIN_PASSWORD_LENGTH;
 }
@@ -31,7 +41,25 @@ function isValidEmail(email: string): boolean {
   return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(email);
 }
 
-function validateSignupInput(username: string, email: string, password: string): void {
+function parseAge(age: string): number {
+  if (!/^\d+$/.test(age)) {
+    throw new ValidationError("Age must be a whole number");
+  }
+
+  const parsedAge = Number(age);
+  if (parsedAge <= 0) {
+    throw new ValidationError("Age must be greater than 0");
+  }
+
+  return parsedAge;
+}
+
+function validateSignupInput(
+  username: string,
+  email: string,
+  password: string,
+  age: string,
+): number {
   if (!username) {
     throw new ValidationError("Username is required");
   }
@@ -55,6 +83,12 @@ function validateSignupInput(username: string, email: string, password: string):
   if (password.length < MIN_PASSWORD_LENGTH) {
     throw new ValidationError("Password must be at least 8 characters");
   }
+
+  if (!age) {
+    throw new ValidationError("Age is required");
+  }
+
+  return parseAge(age);
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -69,16 +103,23 @@ export async function registerUser(
   usernameRaw: string,
   emailRaw: string,
   passwordRaw: string,
+  ageRaw: string,
 ): Promise<UserRow> {
   const username = normalizeUsername(usernameRaw);
   const email = normalizeEmail(emailRaw);
   const password = passwordRaw;
+  const age = normalizeAge(ageRaw);
 
-  validateSignupInput(username, email, password);
+  const parsedAge = validateSignupInput(username, email, password, age);
+
+  const existingUser = await findUserByAge(parsedAge);
+  if (existingUser) {
+    throw new UserConflictError("AGE_TAKEN");
+  }
 
   const hashedPassword = await hashPassword(password);
 
-  return createUser({ username, email, password: hashedPassword });
+  return createUser({ username, email, password: hashedPassword, age: parsedAge });
 }
 
 export async function authenticateUser(

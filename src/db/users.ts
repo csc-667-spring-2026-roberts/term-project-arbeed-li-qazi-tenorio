@@ -1,10 +1,10 @@
 import db from "./connection.js";
 
 export interface UserRow {
-  id: number;
   username: string;
   password: string;
   email: string;
+  age: number;
   created_at: Date;
 }
 
@@ -12,13 +12,20 @@ type CreateUserInput = {
   username: string;
   email: string;
   password: string;
+  age: number;
 };
 
 export class UserConflictError extends Error {
-  code: "USERNAME_TAKEN" | "EMAIL_TAKEN";
+  code: "USERNAME_TAKEN" | "EMAIL_TAKEN" | "AGE_TAKEN";
 
-  constructor(code: "USERNAME_TAKEN" | "EMAIL_TAKEN") {
-    super(code === "USERNAME_TAKEN" ? "Username already taken" : "Email already taken");
+  constructor(code: "USERNAME_TAKEN" | "EMAIL_TAKEN" | "AGE_TAKEN") {
+    super(
+      code === "USERNAME_TAKEN"
+        ? "Username already taken"
+        : code === "EMAIL_TAKEN"
+          ? "Email already taken"
+          : "Age already taken",
+    );
     this.name = "UserConflictError";
     this.code = code;
   }
@@ -48,24 +55,28 @@ function mapUniqueViolation(error: unknown): UserConflictError | null {
     return new UserConflictError("EMAIL_TAKEN");
   }
 
+  if (constraint.includes("age") || detail.includes("(age)")) {
+    return new UserConflictError("AGE_TAKEN");
+  }
+
   return new UserConflictError("EMAIL_TAKEN");
 }
 
-export async function findUserById(id: number): Promise<UserRow | null> {
+export async function findUserByAge(age: number): Promise<UserRow | null> {
   return db.oneOrNone<UserRow>(
     `
-                                 SELECT id, username, password, email, created_at
+                                 SELECT username, password, email, age, created_at
                                  FROM users 
-                                 WHERE id = $1
+                                 WHERE age = $1
                                  `,
-    [id],
+    [age],
   );
 }
 
 export async function findUserByEmail(email: string): Promise<UserRow | null> {
   return db.oneOrNone<UserRow>(
     `
-                                 SELECT id, username, password, email, created_at
+                                 SELECT username, password, email, age, created_at
                                  FROM users 
                                  WHERE email = $1
                                  `,
@@ -76,7 +87,7 @@ export async function findUserByEmail(email: string): Promise<UserRow | null> {
 export async function findUserByUsername(username: string): Promise<UserRow | null> {
   return db.oneOrNone<UserRow>(
     `
-                                 SELECT id, username, password, email, created_at
+                                 SELECT username, password, email, age, created_at
                                  FROM users 
                                  WHERE username = $1
                                  `,
@@ -93,16 +104,16 @@ export async function findUserByIdentifier(identifier: string): Promise<UserRow 
 }
 
 export async function createUser(input: CreateUserInput): Promise<UserRow> {
-  const { username, email, password } = input;
+  const { username, email, password, age } = input;
 
   try {
     return await db.one<UserRow>(
       `
-                                     INSERT INTO users(username, email, password)
-                                     VALUES($1, $2, $3)
-                                     RETURNING id, username, password, email, created_at
+                                      INSERT INTO users(username, email, password, age)
+                                      VALUES($1, $2, $3, $4)
+                                     RETURNING username, password, email, age, created_at
                                      `,
-      [username, email, password],
+      [username, email, password, age],
     );
   } catch (error) {
     const mapped = mapUniqueViolation(error);

@@ -10,9 +10,26 @@ import { requireAuth, redirectIfAuthenticated } from "../middleware/auth.js";
 
 const router = Router();
 
+function readBodyString(body: unknown, key: string): string {
+  if (!body || typeof body !== "object") {
+    return "";
+  }
+
+  const value = (body as Record<string, unknown>)[key];
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  return "";
+}
+
 router.get("/", (req, res) => {
   res.render("home", {
-    currentUserId: req.session.userId ?? null,
+    currentUserAge: req.session.userAge ?? null,
   });
 });
 
@@ -22,19 +39,21 @@ router.get("/signup", redirectIfAuthenticated, (_req, res) => {
     form: {
       username: "",
       email: "",
+      age: "",
     },
   });
 });
 
 router.post("/signup", redirectIfAuthenticated, async (req, res, next) => {
-  const username = String(req.body.username ?? "");
-  const email = String(req.body.email ?? "");
-  const password = String(req.body.password ?? "");
+  const username = readBodyString(req.body, "username");
+  const email = readBodyString(req.body, "email");
+  const password = readBodyString(req.body, "password");
+  const age = readBodyString(req.body, "age");
 
   try {
-    const user = await registerUser(username, email, password);
+    const user = await registerUser(username, email, password, age);
 
-    req.session.userId = user.id;
+    req.session.userAge = user.age;
     res.redirect("/lobby");
   } catch (error) {
     if (error instanceof UserConflictError) {
@@ -43,6 +62,7 @@ router.post("/signup", redirectIfAuthenticated, async (req, res, next) => {
         form: {
           username,
           email,
+          age,
         },
       });
       return;
@@ -54,6 +74,7 @@ router.post("/signup", redirectIfAuthenticated, async (req, res, next) => {
         form: {
           username,
           email,
+          age,
         },
       });
 
@@ -74,8 +95,8 @@ router.get("/login", redirectIfAuthenticated, (_req, res) => {
 });
 
 router.post("/login", redirectIfAuthenticated, async (req, res, next) => {
-  const identifier = String(req.body.identifier ?? "");
-  const password = String(req.body.password ?? "");
+  const identifier = readBodyString(req.body, "identifier");
+  const password = readBodyString(req.body, "password");
 
   try {
     const user = await authenticateUser(identifier, password);
@@ -89,7 +110,7 @@ router.post("/login", redirectIfAuthenticated, async (req, res, next) => {
       return;
     }
 
-    req.session.userId = user.id;
+    req.session.userAge = user.age;
     res.redirect("/lobby");
   } catch (error) {
     next(error);
@@ -111,7 +132,7 @@ router.post("/logout", (req, res, next) => {
 if (process.env.NODE_ENV !== "production") {
   router.post("/dev/login", (_req, res) => {
     // fake user for local testing only
-    _req.session.userId = 1;
+    _req.session.userAge = 21;
     res.redirect("/lobby");
   });
   router.post("/dev/logout", (req, res, next) => {
@@ -128,7 +149,7 @@ if (process.env.NODE_ENV !== "production") {
 
 router.get("/lobby", requireAuth, (req, res) => {
   res.render("lobby", {
-    currentUserId: req.session.userId,
+    currentUserAge: req.session.userAge,
   });
 });
 
@@ -139,7 +160,7 @@ Database Test Route (checks DB connection)
 */
 router.get("/api/db-test", async (_req, res) => {
   try {
-    const result = await db.one("SELECT NOW()");
+    const result = await db.one<{ now: string }>("SELECT NOW()");
     res.json(result);
   } catch (error) {
     console.error(error);
@@ -153,12 +174,13 @@ POST route (write to database)
 --------------------------------------------------
 */
 router.post("/api/message", async (req, res) => {
-  const { message } = req.body;
+  const message = readBodyString(req.body, "message");
 
   try {
-    const result = await db.one("INSERT INTO test_messages(message) VALUES($1) RETURNING *", [
-      message,
-    ]);
+    const result = await db.one<Record<string, unknown>>(
+      "INSERT INTO test_messages(message) VALUES($1) RETURNING *",
+      [message],
+    );
 
     res.json(result);
   } catch (error) {
@@ -174,7 +196,9 @@ GET route (read from database)
 */
 router.get("/api/messages", async (_req, res) => {
   try {
-    const messages = await db.any("SELECT * FROM test_messages ORDER BY id DESC");
+    const messages = await db.any<Record<string, unknown>>(
+      "SELECT * FROM test_messages ORDER BY id DESC",
+    );
     res.json(messages);
   } catch (error) {
     console.error(error);

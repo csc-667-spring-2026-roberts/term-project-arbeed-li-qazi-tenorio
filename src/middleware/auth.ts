@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  if (!req.session.userId) {
+  if (!req.session.userAge) {
     res.redirect("/login");
     return;
   }
@@ -10,7 +10,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 }
 
 export function redirectIfAuthenticated(req: Request, res: Response, next: NextFunction): void {
-  if (req.session.userId) {
+  if (req.session.userAge) {
     res.redirect("/lobby");
     return;
   }

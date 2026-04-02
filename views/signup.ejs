@@ -26,14 +26,39 @@
             <br />
 
             <label>
-                Password:
-                <input type="password" name="password" minlength="8" required />
+                Age:
+                <input type="number" name="age" min="1" step="1" value="<%= form.age %>" required />
             </label>
+            <br />
+
+            <label>
+                Password:
+                <input type="password" name="password" minlength="8" required data-password-input />
+            </label>
+            <p class="signup-password-joke" data-password-joke hidden>
+                Password too strong. System feels threatened.
+            </p>
             <br />
 
             <button type="submit">Sign Up</button>
         </form>
         <p><a href="/login">Already have an account? Log in</a></p>
         <p><a href="/">Home</a></p>
+        <script>
+            (() => {
+                const passwordInput = document.querySelector("[data-password-input]");
+                const joke = document.querySelector("[data-password-joke]");
+                if (!(passwordInput instanceof HTMLInputElement) || !(joke instanceof HTMLElement)) {
+                    return;
+                }
+
+                const toggleJoke = () => {
+                    joke.hidden = passwordInput.value.length < 16;
+                };
+
+                passwordInput.addEventListener("input", toggleJoke);
+                toggleJoke();
+            })();
+        </script>
     </body>
 </html>

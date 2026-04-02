@@ -1,0 +1,37 @@
+Table users {
+  age integer [pk, increment]
+  username varchar
+  email varchar
+  created_at timestamp
+}
+
+Table games {
+  id integer [pk, increment]
+  created_at timestamp
+  status varchar
+}
+
+Table players {
+  id integer [pk, increment]
+  user_id integer [not null, ref: > users.age]
+  game_id integer [not null, ref: > games.id]
+  seat_number integer
+  chips integer
+}
+
+Table hands {
+  id integer [pk, increment]
+  game_id integer [not null, ref: > games.id]
+  dealer_seat integer
+  stage varchar
+  pot integer
+}
+
+Table actions {
+  id integer [pk, increment]
+  hand_id integer [not null, ref: > hands.id]
+  player_id integer [not null, ref: > players.id]
+  action_type varchar
+  amount integer
+  created_at timestamp
+}

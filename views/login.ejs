@@ -10,10 +10,10 @@
         <h1>Log In</h1>
 
         <% if (error) { %>
-        <p><%= error %></p>
+        <p class="login-error"><%= error %></p>
         <% } %>
 
-        <form action="/login" method="POST">
+        <form action="/login" method="POST" class="login-form" data-login-form>
             <label>
                 Username or Email
                 <input type="text" name="identifier" value="<%= form.identifier %>" required />
@@ -26,7 +26,13 @@
             </label>
             <br />
 
-            <button type="submit">Log In</button>
+            <button type="submit" data-login-button>Log In</button>
+            <p class="login-prank-note" data-login-prank-note hidden>
+                Security timeout avoided. Please catch the button to continue.
+            </p>
+            <p class="login-prank-timeout" data-login-timeout-message hidden>
+                Session timed out. Recalibrating login controls...
+            </p>
         </form>
 
         <p><a href="/signup">Need an account? Sign up</a></p>
@@ -36,6 +42,76 @@
             <button type="submit">Dev Login (Local Only)</button>
         </form>
         <% } %>
+        <script>
+            (() => {
+                const ATTEMPT_KEY = "login-failed-attempts";
+                const DODGE_THRESHOLD = 3;
+                const hadLoginError = <%- JSON.stringify(error === "Invalid username/email or password") %>;
+
+                let attempts = Number(sessionStorage.getItem(ATTEMPT_KEY) || "0");
+                if (hadLoginError) {
+                    attempts += 1;
+                    sessionStorage.setItem(ATTEMPT_KEY, String(attempts));
+                }
+
+                if (attempts < DODGE_THRESHOLD) {
+                    return;
+                }
+
+                const form = document.querySelector("[data-login-form]");
+                const button = document.querySelector("[data-login-button]");
+                const note = document.querySelector("[data-login-prank-note]");
+                const timeoutMessage = document.querySelector("[data-login-timeout-message]");
+                if (!(form instanceof HTMLElement) || !(button instanceof HTMLButtonElement)) {
+                    return;
+                }
+
+                form.classList.add("login-form--prank");
+
+                const moveButton = () => {
+                    if (!form.classList.contains("login-form--dodging")) {
+                        return;
+                    }
+
+                    const maxX = Math.max(form.clientWidth - button.offsetWidth, 0);
+                    const maxY = Math.max(form.clientHeight - button.offsetHeight, 0);
+                    const nextX = Math.floor(Math.random() * (maxX + 1));
+                    const nextY = Math.floor(Math.random() * (maxY + 1));
+
+                    button.style.left = `${nextX}px`;
+                    button.style.top = `${nextY}px`;
+                };
+
+                const stopDodging = () => {
+                    form.classList.remove("login-form--dodging");
+                    button.style.left = "";
+                    button.style.top = "";
+                    if (note instanceof HTMLElement) {
+                        note.hidden = false;
+                        note.textContent = "Security review complete. You may log in now.";
+                    }
+                };
+
+                const startDodging = () => {
+                    form.classList.add("login-form--dodging");
+                    if (timeoutMessage instanceof HTMLElement) {
+                        timeoutMessage.hidden = true;
+                    }
+                    if (note instanceof HTMLElement) {
+                        note.hidden = false;
+                    }
+                    button.addEventListener("pointerenter", moveButton);
+                    button.addEventListener("focus", moveButton);
+                    moveButton();
+                    window.setTimeout(stopDodging, 6000);
+                };
+
+                if (timeoutMessage instanceof HTMLElement) {
+                    timeoutMessage.hidden = false;
+                }
+
+                window.setTimeout(startDodging, 1200);
+            })();
+        </script>
     </body>
 </html>
-
