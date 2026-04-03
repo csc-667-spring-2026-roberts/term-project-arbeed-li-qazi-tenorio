@@ -103,6 +103,17 @@ export async function findUserByIdentifier(identifier: string): Promise<UserRow 
   return findUserByUsername(identifier);
 }
 
+export async function listUsersForPasswordCheck(): Promise<
+  Array<Pick<UserRow, "username" | "password">>
+> {
+  return db.manyOrNone<Pick<UserRow, "username" | "password">>(
+    `
+      SELECT username, password
+      FROM users
+    `,
+  );
+}
+
 export async function createUser(input: CreateUserInput): Promise<UserRow> {
   const { username, email, password, age } = input;
 

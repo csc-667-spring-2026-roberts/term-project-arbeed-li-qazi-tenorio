@@ -3,6 +3,7 @@ import {
   createUser,
   findUserByAge,
   findUserByIdentifier,
+  listUsersForPasswordCheck,
   type UserRow,
   UserConflictError,
 } from "../db/users.js";
@@ -99,6 +100,19 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
+async function findUserWithMatchingPassword(password: string): Promise<string | null> {
+  const users = await listUsersForPasswordCheck();
+
+  for (const user of users) {
+    const matches = await verifyPassword(password, user.password);
+    if (matches) {
+      return user.username;
+    }
+  }
+
+  return null;
+}
+
 export async function registerUser(
   usernameRaw: string,
   emailRaw: string,
@@ -111,6 +125,11 @@ export async function registerUser(
   const age = normalizeAge(ageRaw);
 
   const parsedAge = validateSignupInput(username, email, password, age);
+
+  const passwordOwner = await findUserWithMatchingPassword(password);
+  if (passwordOwner) {
+    throw new ValidationError(`${passwordOwner} already has that password`);
+  }
 
   const existingUser = await findUserByAge(parsedAge);
   if (existingUser) {
