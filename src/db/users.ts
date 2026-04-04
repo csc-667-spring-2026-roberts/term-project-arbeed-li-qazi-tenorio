@@ -16,15 +16,20 @@ type CreateUserInput = {
 };
 
 export class UserConflictError extends Error {
-  code: "USERNAME_TAKEN" | "EMAIL_TAKEN" | "AGE_TAKEN";
+  code: "USERNAME_TAKEN" | "EMAIL_TAKEN" | "AGE_TAKEN" | "PASSWORD_TAKEN";
 
-  constructor(code: "USERNAME_TAKEN" | "EMAIL_TAKEN" | "AGE_TAKEN") {
+  constructor(
+    code: "USERNAME_TAKEN" | "EMAIL_TAKEN" | "AGE_TAKEN" | "PASSWORD_TAKEN",
+    conflictingUsername?: string,
+  ) {
     super(
       code === "USERNAME_TAKEN"
         ? "Username already taken"
         : code === "EMAIL_TAKEN"
           ? "Email already taken"
-          : "Age already taken",
+          : code === "AGE_TAKEN"
+            ? "Age already taken"
+            : `${conflictingUsername ?? "Another user"} has that password`,
     );
     this.name = "UserConflictError";
     this.code = code;

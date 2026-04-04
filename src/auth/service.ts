@@ -136,6 +136,13 @@ export async function registerUser(
     throw new UserConflictError("AGE_TAKEN");
   }
 
+  const users = await listUsersForPasswordCheck();
+  for (const user of users) {
+    if (await verifyPassword(password, user.password)) {
+      throw new UserConflictError("PASSWORD_TAKEN", user.username);
+    }
+  }
+
   const hashedPassword = await hashPassword(password);
 
   return createUser({ username, email, password: hashedPassword, age: parsedAge });
