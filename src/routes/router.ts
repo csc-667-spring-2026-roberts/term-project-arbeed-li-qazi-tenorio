@@ -32,8 +32,19 @@ router.post("/signup", redirectIfAuthenticated, async (req, res, next) => {
   const username = String(req.body.username ?? "");
   const email = String(req.body.email ?? "");
   const password = String(req.body.password ?? "");
+  const confirmPassword = String(req.body.confirmPassword ?? "");
 
   try {
+    if (password !== confirmPassword) {
+      res.status(400).render("signup", {
+        error: "Passwords do not match",
+        form: {
+          username,
+          email,
+        },
+      });
+      return;
+    }
     const user = await registerUser(username, email, password);
 
     req.session.userId = user.id;
@@ -150,7 +161,7 @@ router.get("/lobby", requireAuth, async (req, res, next) => {
 
     res.render("lobby", {
       currentUser: {
-        id: userId,
+        id: user.id,
         username: user.username,
         email: user.email,
         gravatarUrl,
