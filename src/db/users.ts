@@ -3,7 +3,7 @@ import db from "./connection.js";
 export interface UserRow {
   id: number;
   username: string;
-  password: string;
+  password_hash: string;
   email: string;
   created_at: Date;
 }
@@ -11,7 +11,7 @@ export interface UserRow {
 type CreateUserInput = {
   username: string;
   email: string;
-  password: string;
+  password_hash: string;
 };
 
 export class UserConflictError extends Error {
@@ -54,7 +54,7 @@ function mapUniqueViolation(error: unknown): UserConflictError | null {
 export async function findUserById(id: number): Promise<UserRow | null> {
   return db.oneOrNone<UserRow>(
     `
-                                 SELECT id, username, password, email, created_at
+                                 SELECT id, username, password_hash, email, created_at
                                  FROM users 
                                  WHERE id = $1
                                  `,
@@ -65,7 +65,7 @@ export async function findUserById(id: number): Promise<UserRow | null> {
 export async function findUserByEmail(email: string): Promise<UserRow | null> {
   return db.oneOrNone<UserRow>(
     `
-                                 SELECT id, username, password, email, created_at
+                                 SELECT id, username, password_hash, email, created_at
                                  FROM users 
                                  WHERE email = $1
                                  `,
@@ -76,7 +76,7 @@ export async function findUserByEmail(email: string): Promise<UserRow | null> {
 export async function findUserByUsername(username: string): Promise<UserRow | null> {
   return db.oneOrNone<UserRow>(
     `
-                                 SELECT id, username, password, email, created_at
+                                 SELECT id, username, password_hash, email, created_at
                                  FROM users 
                                  WHERE username = $1
                                  `,
@@ -93,16 +93,16 @@ export async function findUserByIdentifier(identifier: string): Promise<UserRow 
 }
 
 export async function createUser(input: CreateUserInput): Promise<UserRow> {
-  const { username, email, password } = input;
+  const { username, email, password_hash } = input;
 
   try {
     return await db.one<UserRow>(
       `
-                                     INSERT INTO users(username, email, password)
+                                     INSERT INTO users(username, email, password_hash)
                                      VALUES($1, $2, $3)
-                                     RETURNING id, username, password, email, created_at
+                                     RETURNING id, username, password_hash, email, created_at
                                      `,
-      [username, email, password],
+      [username, email, password_hash],
     );
   } catch (error) {
     const mapped = mapUniqueViolation(error);

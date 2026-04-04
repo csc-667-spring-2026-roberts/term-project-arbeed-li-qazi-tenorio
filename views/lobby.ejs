@@ -9,14 +9,14 @@
     <body>
         <h1>Lobby</h1>
         <p>You are logged in!</p>
-        <p>User ID: <%= currentUserId %></p>
-
+        <img src="<%= currentUser.gravatarUrl %>" alt="User avatar" width="128" height="128" />
+        <p>Username: <%= currentUser.username %></p>
+        <p>Email: <%= currentUser.email %></p>
+        <p>User ID: <%= currentUser.id %></p>
         <form action="/logout" method="POST">
             <button type="submit">Log Out</button>
         </form>
-
-        <p><a href="/">Home</a></p>
-    </body>
+        <p><a href="/">Home</a></p>    </body>
 </html>
 
 

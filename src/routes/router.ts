@@ -7,6 +7,8 @@ import {
   ValidationError,
 } from "../auth/service.js";
 import { requireAuth, redirectIfAuthenticated } from "../middleware/auth.js";
+import { type findUserById } from "../db/users.js";
+import { createHash } from "node:crypto";
 
 const router = Router();
 
@@ -104,7 +106,7 @@ router.post("/logout", (req, res, next) => {
     }
 
     res.clearCookie("connect.sid");
-    res.redirect("/");
+    res.redirect("/login");
   });
 });
 
@@ -121,15 +123,42 @@ if (process.env.NODE_ENV !== "production") {
         return;
       }
       res.clearCookie("connect.sid");
-      res.redirect("/");
+      res.redirect("/login");
     });
   });
 }
 
-router.get("/lobby", requireAuth, (req, res) => {
-  res.render("lobby", {
-    currentUserId: req.session.userId,
-  });
+router.get("/lobby", requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) {
+      res.redirect("/login");
+      return;
+    }
+
+    const user = await findUserById(userId);
+    if (!user) {
+      req.session.destroy(() => {
+        res.redirect("/login");
+      });
+      return;
+    }
+
+    const emailHash = createHash("md5").update(user.email.trim().toLowerCase()).digest("hex");
+
+    const gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon&s=128`;
+
+    res.render("lobby", {
+      currentUserId: {
+        id: userId,
+        username: user.username,
+        email: user.email,
+        gravatarUrl,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /*

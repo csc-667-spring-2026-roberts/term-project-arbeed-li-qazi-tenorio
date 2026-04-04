@@ -51,10 +51,6 @@ function validateSignupInput(username: string, email: string, password: string):
   if (!isValidEmail(email)) {
     throw new ValidationError("Please enter a valid email");
   }
-
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    throw new ValidationError("Password must be at least 8 characters");
-  }
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -78,7 +74,7 @@ export async function registerUser(
 
   const hashedPassword = await hashPassword(password);
 
-  return createUser({ username, email, password: hashedPassword });
+  return createUser({ username, email, password_hash: hashedPassword });
 }
 
 export async function authenticateUser(
@@ -95,7 +91,7 @@ export async function authenticateUser(
     return null;
   }
 
-  const ok = await verifyPassword(passwordRaw, user.password);
+  const ok = await verifyPassword(passwordRaw, user.password_hash);
   if (!ok) {
     return null;
   }
