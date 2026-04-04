@@ -7,7 +7,7 @@ import {
   ValidationError,
 } from "../auth/service.js";
 import { requireAuth, redirectIfAuthenticated } from "../middleware/auth.js";
-import { type findUserById } from "../db/users.js";
+import { findUserById } from "../db/users.js";
 import { createHash } from "node:crypto";
 
 const router = Router();
@@ -149,7 +149,7 @@ router.get("/lobby", requireAuth, async (req, res, next) => {
     const gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon&s=128`;
 
     res.render("lobby", {
-      currentUserId: {
+      currentUser: {
         id: userId,
         username: user.username,
         email: user.email,
